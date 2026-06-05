@@ -5,6 +5,7 @@ export interface Task {
   title: string;
   status: "open" | "done";
   created_at: string;
+  assignee_id: number | null;
 }
 
 export interface User {
@@ -16,19 +17,21 @@ export interface User {
 export async function fetchTasks(filters: {
   status?: string;
   search?: string;
+  assignee_id?: string;
 }): Promise<Task[]> {
   const params = new URLSearchParams();
   if (filters.status) params.set("status", filters.status);
   if (filters.search) params.set("search", filters.search);
+  if (filters.assignee_id) params.set("assignee_id", filters.assignee_id);
   const res = await fetch(`${BASE}/tasks?${params.toString()}`);
   return res.json();
 }
 
-export async function createTask(title: string): Promise<Task> {
+export async function createTask(title: string, assignee_id?: number): Promise<Task> {
   const res = await fetch(`${BASE}/tasks`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ title }),
+    body: JSON.stringify({ title, assignee_id }),
   });
   return res.json();
 }
@@ -41,6 +44,18 @@ export async function setTaskStatus(
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ status }),
+  });
+  return res.json();
+}
+
+export async function setTaskAssignee(
+  id: number,
+  assignee_id: number | null
+): Promise<Task> {
+  const res = await fetch(`${BASE}/tasks/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ assignee_id }),
   });
   return res.json();
 }
