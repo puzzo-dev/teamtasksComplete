@@ -77,9 +77,9 @@ pipeline {
                         // SSH Setup and SCP docker-compose
                         sh """
                             SSHPASS_CMD="sshpass"
-                            \${SSHPASS_CMD} -p "\${PROD_PASS}" ssh -o StrictHostKeyChecking=no \${PROD_USER}@\${PRODUCTION_HOST} '
+                            \${SSHPASS_CMD} -p "\${PROD_PASS}" ssh -o StrictHostKeyChecking=no \${PROD_USER}@\${PRODUCTION_HOST} "
                                 mkdir -p \${DEPLOY_PATH}
-                            '
+                            "
                             \${SSHPASS_CMD} -p "\${PROD_PASS}" scp -o StrictHostKeyChecking=no \\
                                 infra/docker-compose.yml \\
                                 \${PROD_USER}@\${PRODUCTION_HOST}:\${DEPLOY_PATH}/
@@ -89,11 +89,11 @@ pipeline {
                         withCredentials([usernamePassword(credentialsId: 'githubkeyX', usernameVariable: 'GH_USER', passwordVariable: 'GH_KEY')]) {
                             sh """
                                 SSHPASS_CMD="sshpass"
-                                \${SSHPASS_CMD} -p "\${PROD_PASS}" ssh -o StrictHostKeyChecking=no \${PROD_USER}@\${PRODUCTION_HOST} '
+                                \${SSHPASS_CMD} -p "\${PROD_PASS}" ssh -o StrictHostKeyChecking=no \${PROD_USER}@\${PRODUCTION_HOST} "
                                     cd \${DEPLOY_PATH}
-                                    export IMAGE_NAME_FRONTEND="\${IMAGE_NAME_FRONTEND}"
-                                    export IMAGE_NAME_BACKEND="\${IMAGE_NAME_BACKEND}"
-                                    export IMAGE_TAG="\${IMAGE_TAG}"
+                                    export IMAGE_NAME_FRONTEND=\\"\${IMAGE_NAME_FRONTEND}\\"
+                                    export IMAGE_NAME_BACKEND=\\"\${IMAGE_NAME_BACKEND}\\"
+                                    export IMAGE_TAG=\\"\${IMAGE_TAG}\\"
                                     
                                     echo \${GH_KEY} | docker login \${REGISTRY} -u \${GH_USER} --password-stdin
                                     
@@ -102,7 +102,7 @@ pipeline {
                                     
                                     docker compose down || true
                                     docker compose up -d
-                                '
+                                "
                             """
                         }
                     }
