@@ -102,6 +102,11 @@ pipeline {
                                     
                                     docker compose down || true
                                     docker compose up -d
+                                    
+                                    echo "Waiting for backend to initialize..."
+                                    sleep 5
+                                    echo "Seeding the database..."
+                                    docker compose exec -T backend npm run seed
                                 "
                             """
                         }
