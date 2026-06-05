@@ -20,7 +20,8 @@ db.exec(`
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     title TEXT NOT NULL,
     status TEXT NOT NULL DEFAULT 'open',
-    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    assignee_id INTEGER REFERENCES users(id)
   );
 `);
 
@@ -35,4 +36,5 @@ export interface Task {
   title: string;
   status: "open" | "done";
   created_at: string;
+  assignee_id: number | null;
 }
