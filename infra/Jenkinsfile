@@ -1,0 +1,112 @@
+pipeline {
+    agent {
+        label 'jenkins-python-agent'
+    }
+    
+    environment {
+        REGISTRY = 'ghcr.io'
+        IMAGE_NAME_FRONTEND = "${REGISTRY}/teamtasks/frontend"
+        IMAGE_NAME_BACKEND = "${REGISTRY}/teamtasks/backend"
+        IMAGE_TAG = "${env.BUILD_NUMBER}"
+        
+        PRODUCTION_HOST = credentials('production-host')
+        PRODUCTION_USER = credentials('production-user')
+        DEPLOY_PATH = '/opt/teamtasks'
+    }
+    
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+        timeout(time: 1, unit: 'HOURS')
+        timestamps()
+    }
+    
+    stages {
+        stage('Build Frontend Docker Image') {
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'githubkeyX', usernameVariable: 'GH_USER', passwordVariable: 'GH_KEY')]) {
+                        sh "echo \${GH_KEY} | docker login \${REGISTRY} -u \${GH_USER} --password-stdin"
+                    }
+                    sh """
+                        docker build \\
+                            --no-cache \\
+                            --tag \${IMAGE_NAME_FRONTEND}:\${IMAGE_TAG} \\
+                            --tag \${IMAGE_NAME_FRONTEND}:latest \\
+                            --build-arg VITE_API_URL=/api \\
+                            -f infra/Dockerfile.frontend .
+                    """
+                }
+            }
+        }
+        
+        stage('Build Backend Docker Image') {
+            steps {
+                script {
+                    sh """
+                        docker build \\
+                            --no-cache \\
+                            --tag \${IMAGE_NAME_BACKEND}:\${IMAGE_TAG} \\
+                            --tag \${IMAGE_NAME_BACKEND}:latest \\
+                            -f infra/Dockerfile.backend .
+                    """
+                }
+            }
+        }
+        
+        stage('Push to Registry') {
+            steps {
+                script {
+                    sh """
+                        docker push \${IMAGE_NAME_FRONTEND}:\${IMAGE_TAG}
+                        docker push \${IMAGE_NAME_FRONTEND}:latest
+                        docker push \${IMAGE_NAME_BACKEND}:\${IMAGE_TAG}
+                        docker push \${IMAGE_NAME_BACKEND}:latest
+                    """
+                }
+            }
+        }
+        
+        stage('Deploy to Production') {
+            steps {
+                script {
+                    withCredentials([
+                        string(credentialsId: 'production-ssh-pass', variable: 'PROD_PASS'),
+                        string(credentialsId: 'production-user', variable: 'PROD_USER')
+                    ]) {
+                        // SSH Setup and SCP docker-compose
+                        sh """
+                            SSHPASS_CMD="sshpass"
+                            \${SSHPASS_CMD} -p "\${PROD_PASS}" ssh -o StrictHostKeyChecking=no \${PROD_USER}@\${PRODUCTION_HOST} '
+                                mkdir -p \${DEPLOY_PATH}
+                            '
+                            \${SSHPASS_CMD} -p "\${PROD_PASS}" scp -o StrictHostKeyChecking=no \\
+                                infra/docker-compose.yml \\
+                                \${PROD_USER}@\${PRODUCTION_HOST}:\${DEPLOY_PATH}/
+                        """
+                        
+                        // Deploy
+                        withCredentials([usernamePassword(credentialsId: 'githubkeyX', usernameVariable: 'GH_USER', passwordVariable: 'GH_KEY')]) {
+                            sh """
+                                SSHPASS_CMD="sshpass"
+                                \${SSHPASS_CMD} -p "\${PROD_PASS}" ssh -o StrictHostKeyChecking=no \${PROD_USER}@\${PRODUCTION_HOST} '
+                                    cd \${DEPLOY_PATH}
+                                    export IMAGE_NAME_FRONTEND="\${IMAGE_NAME_FRONTEND}"
+                                    export IMAGE_NAME_BACKEND="\${IMAGE_NAME_BACKEND}"
+                                    export IMAGE_TAG="\${IMAGE_TAG}"
+                                    
+                                    echo \${GH_KEY} | docker login \${REGISTRY} -u \${GH_USER} --password-stdin
+                                    
+                                    docker pull \${IMAGE_NAME_FRONTEND}:\${IMAGE_TAG}
+                                    docker pull \${IMAGE_NAME_BACKEND}:\${IMAGE_TAG}
+                                    
+                                    docker compose down || true
+                                    docker compose up -d
+                                '
+                            """
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

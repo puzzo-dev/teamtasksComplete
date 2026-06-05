@@ -1,0 +1,15 @@
+version: '3.8'
+services:
+  frontend:
+    image: ${IMAGE_NAME_FRONTEND}:${IMAGE_TAG:-latest}
+    ports:
+      - "446:80"
+    depends_on:
+      - backend
+    restart: always
+
+  backend:
+    image: ${IMAGE_NAME_BACKEND}:${IMAGE_TAG:-latest}
+    expose:
+      - "3001"
+    restart: always
