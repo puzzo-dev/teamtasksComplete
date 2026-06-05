@@ -2,14 +2,47 @@ version: '3.8'
 services:
   frontend:
     image: ${IMAGE_NAME_FRONTEND}:${IMAGE_TAG:-latest}
-    ports:
-      - "446:80"
     depends_on:
       - backend
     restart: always
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik-public"
+      
+      # HTTPS Redirect Middleware
+      - "traefik.http.middlewares.teamtasks-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.teamtasks-https-redirect.redirectscheme.permanent=true"
+
+      # HTTP Router (redirects to HTTPS)
+      - "traefik.http.routers.teamtasks-http.rule=Host(`folixxtasks.ibrands.ng`)"
+      - "traefik.http.routers.teamtasks-http.entrypoints=http"
+      - "traefik.http.routers.teamtasks-http.middlewares=teamtasks-https-redirect"
+      - "traefik.http.routers.teamtasks-http.service=teamtasks-frontend"
+
+      # HTTPS Router
+      - "traefik.http.routers.teamtasks-https.rule=Host(`folixxtasks.ibrands.ng`)"
+      - "traefik.http.routers.teamtasks-https.entrypoints=https"
+      - "traefik.http.routers.teamtasks-https.tls=true"
+      - "traefik.http.routers.teamtasks-https.tls.certresolver=le"
+      - "traefik.http.routers.teamtasks-https.service=teamtasks-frontend"
+      
+      # Map to internal port 80 (Nginx)
+      - "traefik.http.services.teamtasks-frontend.loadbalancer.server.port=80"
+    networks:
+      - traefik-public
+      - teamtasks-network
 
   backend:
     image: ${IMAGE_NAME_BACKEND}:${IMAGE_TAG:-latest}
     expose:
       - "3001"
     restart: always
+    networks:
+      - teamtasks-network
+
+networks:
+  traefik-public:
+    external: true
+  teamtasks-network:
+    name: teamtasks-network
+    driver: bridge
