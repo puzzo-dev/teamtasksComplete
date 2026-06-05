@@ -29,7 +29,6 @@ pipeline {
                     }
                     sh """
                         docker build \\
-                            --no-cache \\
                             --tag \${IMAGE_NAME_FRONTEND}:\${IMAGE_TAG} \\
                             --tag \${IMAGE_NAME_FRONTEND}:latest \\
                             --build-arg VITE_API_URL=/api \\
@@ -44,7 +43,6 @@ pipeline {
                 script {
                     sh """
                         docker build \\
-                            --no-cache \\
                             --tag \${IMAGE_NAME_BACKEND}:\${IMAGE_TAG} \\
                             --tag \${IMAGE_NAME_BACKEND}:latest \\
                             -f infra/Dockerfile.backend .
