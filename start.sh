@@ -7,7 +7,7 @@ echo "🚀 Starting backend server on port 3001..."
 cd server && npm run dev &
 
 echo "🚀 Starting frontend server..."
-cd ../web && npm run dev &
+cd web && npm run dev &
 
 echo ""
 echo "✅ Both servers are booting up!"
