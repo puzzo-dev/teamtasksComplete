@@ -19,8 +19,14 @@ export function App() {
   }, []);
 
   useEffect(() => {
-    load();
-  }, [load]);
+    let ignore = false;
+    fetchTasks({ status, search, assignee_id: assigneeId }).then((data) => {
+      if (!ignore) setTasks(data);
+    });
+    return () => {
+      ignore = true;
+    };
+  }, [status, search, assigneeId]);
 
   async function handleToggle(task: Task) {
     await setTaskStatus(task.id, task.status === "done" ? "open" : "done");
