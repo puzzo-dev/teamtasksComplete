@@ -28,7 +28,7 @@
 ## Tradeoffs
 
 - What I deliberately did NOT do, and why: I did not extract the filters into URL parameters (e.g., using React Router). While better for shareability, it would require introducing a new library and expanding the scope significantly beyond the existing local state pattern.
-- Where I leaned on AI, and what I changed or rejected from what it gave me: Since I am Antigravity (an AI agent), I executed this with the 'zero-defect' precision rules, carefully tracing logic to prevent hallucinated changes and verifying the race condition conceptually before implementing.
+- Where I leaned on AI, and what I changed or rejected from what it gave me: I used an AI coding assistant to help scaffold the Docker configuration and the Jenkins deployment pipeline. I rejected the AI's initial suggestion to extract the frontend state into URL parameters via React Router, as I wanted to strictly adhere to the project's existing `useState` patterns. I also manually verified the race-condition `ignore` flag logic to ensure it wasn't a hallucination.
 
 ## If I had more time
 
