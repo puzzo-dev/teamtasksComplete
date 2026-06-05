@@ -1,40 +1,51 @@
-# TeamTasks
+# TeamTasks Complete
 
-A small task-tracking app. This is a take-home starter. Read `TAKE_HOME.md` for the actual task.
+A robust, full-stack task-tracking application built to manage team assignments efficiently. 
+
+## Features
+- **Task Management**: Create, toggle, and search tasks.
+- **Assignees**: Assign tasks to users dynamically during creation or inline directly from the list.
+- **Real-time Filtering**: Filter tasks by status, assignee, and search keywords simultaneously.
+- **Containerized Infrastructure**: Production-ready deployment pipeline using Docker and Jenkins.
 
 ## Stack
 
 - **server/** — Node + TypeScript + Express + SQLite (better-sqlite3)
 - **web/** — React + Vite + TypeScript
+- **infra/** — Docker, Nginx, Docker Compose, Jenkinsfile
 
-SQLite is used so the app runs with zero database setup. (At a real company you'd swap this for the team's actual DB.)
+SQLite is used for lightweight local state. The API runs on port `:3001` and the React frontend on `:5173`.
 
 ## Requirements
 
 - Node 18+ and npm
+- (Optional) Docker & Docker Compose for production testing
 
-## Setup
+## Local Development Setup
 
-From the repo root:
+To run the application locally on your machine:
 
+1. Install dependencies and seed the database (run inside `server/` and `web/` directories):
 ```bash
-npm run install:all   # installs root, server, and web deps
-npm run seed          # creates and seeds the SQLite database
-npm run dev           # runs API (:3001) and web (:5173) together
+cd server && npm install && npm run seed
+cd ../web && npm install
 ```
 
-Then open http://localhost:5173
+2. Start the development servers simultaneously using the provided bash script at the root:
+```bash
+./start.sh
+```
+> The application will be available at `http://localhost:5173`. Press `Ctrl+C` to cleanly stop both servers.
 
-To reset the data at any time, run `npm run seed` again.
+## Production Deployment (Jenkins)
 
-## What's here
+This project contains a production-ready Jenkins pipeline (`infra/Jenkinsfile`).
 
-- List tasks, create a task, mark a task done, search by title
-- A `users` table seeded with a few people (not yet connected to tasks)
-- `GET /api/users`, `GET/POST/PATCH /api/tasks`
-
-## Submitting
-
-- Commit as you go.
-- Fill in `DECISIONS.md`.
-- Push and share the link. We'll set up a short walkthrough call.
+1. **Architecture**: 
+   - Multi-stage Docker build for the frontend (Vite -> Nginx static serving).
+   - Node.js Alpine container for the backend API.
+   - `docker-compose.yml` to orchestrate them, natively proxying `/api` traffic through Nginx.
+2. **Domain Routing**: 
+   - The stack exposes port `446`, designed to sit behind an external reverse proxy (like Traefik/Apache) routing `folixxtasks.ibrands.ng` to it.
+3. **Execution**:
+   - The Jenkins pipeline builds the images, pushes them to `ghcr.io/teamtasks`, SSHs into the production VPS, and executes `docker compose up -d`.
