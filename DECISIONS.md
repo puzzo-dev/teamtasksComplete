@@ -42,6 +42,7 @@
 
 ## Deployment (optional)
 
-- Live URL (if deployed): (Pending Jenkins VPS pipeline)
-- How I hosted it: (Pending Jenkins VPS pipeline)
+- Live URL (if deployed): https://folixxtasks.ibrands.ng
+- GitHub Repository: https://github.com/puzzo-dev/teamtasksComplete
+- How I hosted it: Containerized the frontend (Nginx) and backend (Express/SQLite) using Docker, and built a declarative Jenkins CI/CD pipeline to push the images to the GitHub Container Registry. The pipeline automatically SSHs into a production VPS, pulls the latest images, and orchestrates a zero-downtime deployment using `docker-compose` behind a Traefik reverse proxy.
 - What I'd harden before real production: I would add authentication, sanitize all inputs to prevent SQL injection, set up rate limiting, and use connection pooling for the database instead of `better-sqlite3`'s direct file access if high concurrency is expected.
